@@ -53,7 +53,9 @@ String Location::toString(Flags<ToStringFlag> flags, Hash<Path, String> *context
     }
 
     Path p = path();
-    if (!(flags & AbsolutePath) && Server::instance()) {
+    if (flags & ConvertToRelative) {
+        convertPathRelative(p);
+    } else if (!(flags & AbsolutePath) && Server::instance()) {
         Server *server = Server::instance();
         if (std::shared_ptr<Project> pp = server->currentProject()) {
             const Path projectPath = pp->path();

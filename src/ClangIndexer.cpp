@@ -1132,9 +1132,7 @@ void ClangIndexer::handleInclude(const CXCursor &cursor, CXCursorKind kind, Loca
             c.kind = cursor.kind;
             c.symbolLength = c.symbolName.size() + 2;
             c.location = location;
-            Path refLocPath = refLoc.toString(Location::NoColor|Location::AbsolutePath);
-            Location::replaceFullWithRelativePath(refLocPath);
-            unit(location)->targets[location][refLocPath] = 0; // ### what targets value to create for this?
+            unit(location)->targets[location][refLoc.toString(Location::NoColor|Location::ConvertToRelative)] = 0; // ### what targets value to create for this?
             // this fails for things like:
             // # include    <foobar.h>
             return;
@@ -1188,7 +1186,7 @@ CXChildVisitResult ClangIndexer::handleStatement(const CXCursor &cursor, CXCurso
                 c.symbolLength = 6;
                 c.location = location;
                 setRange(c, clang_getCursorExtent(cursor));
-                u->targets[location][scope.start.toString(Location::NoColor|Location::AbsolutePath)] = 0;
+                u->targets[location][scope.start.toString(Location::NoColor|Location::ConvertToRelative)] = 0;
                 break;
             }
         }
@@ -1255,7 +1253,7 @@ CXChildVisitResult ClangIndexer::handleStatement(const CXCursor &cursor, CXCurso
         c.kind = kind;
         c.symbolLength = c.symbolName.size();
         c.location = location;
-        u->targets[location][target.toString(Location::NoColor|Location::AbsolutePath)] = 0;
+        u->targets[location][target.toString(Location::NoColor|Location::ConvertToRelative)] = 0;
         break; }
     default:
         break;
@@ -1795,9 +1793,10 @@ bool ClangIndexer::writeFiles(const Path &root, String &error)
         return false;
     }
 
-    fprintf(f, "%s\n%s\n",
-            mSourceFile.constData(),
-            String::join(mSource.toCommandLine(Source::Default|Source::IncludeCompiler|Source::IncludeSourceFile), " ").constData());
+    const Path p = Location::replaceFullWithRelativePath(mSourceFile);
+    const String args = Location::replaceFullWithRelativePath(String::join(mSource.toCommandLine(Source::Default|Source::IncludeCompiler|Source::IncludeSourceFile), ' '));
+
+    fprintf(f, "%s\n%s\n", p.constData(), args.constData());
     fclose(f);
 
     return true;
@@ -2135,7 +2134,7 @@ void ClangIndexer::addFileSymbol(uint32_t file)
 {
     const Location loc(file, 1, 1);
     Path path = Location::path(file);
-    Location::replaceFullWithRelativePath(path);
+    Location::convertPathRelative(path);
     auto ref = unit(loc);
     ref->symbolNames[path].insert(loc);
     const char *fn = path.fileName();

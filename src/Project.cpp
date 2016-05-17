@@ -277,6 +277,11 @@ bool Project::readSources(const Path &path, Sources &sources, Hash<Path, Compila
     }
 
     file >> sources;
+    if (!Server::instance()->options().sandboxRoot.isEmpty()) {
+        for (Source &src : sources) {
+            Location::convertPathA(src.sourceFile);
+        }
+    }
     if (info)
         file >> *info;
     return true;

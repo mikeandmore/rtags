@@ -166,7 +166,8 @@ public:
         NoFlag = 0x0,
         ShowContext = 0x1,
         NoColor = 0x2,
-        AbsolutePath = 0x4
+        AbsolutePath = 0x4,
+        ConvertToRelative = 0x8
     };
 
     String toString(Flags<ToStringFlag> flags = NoFlag, Hash<Path, String> *contextCache = 0) const;
